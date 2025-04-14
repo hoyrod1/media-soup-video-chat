@@ -13,8 +13,21 @@ const httpsServer = https.createServer(option, app);
 const socketio = require("socket.io");
 const mediaSoup = require("mediasoup");
 
-const io = socketio(httpsServer, {
-  cors: ["https://localhost:8000"],
-});
+const config = require("./config/config");
+const createWorkers = require("./createWorkers");
 
-httpsServer.listen(8000);
+//set up the socketio server, listening by way of our express http
+const io = socketio(httpsServer, {
+  cors: [`https://localhost:${config.port}`],
+});
+//init workers, it's where our mediasoup workers will live
+let workers = null;
+//initMediaSoup gets medisoup ready to do its thing
+initMediaSoup = async () => {
+  workers = await createWorkers();
+  // console.log(workers);
+};
+
+initMediaSoup(); //build our mediasoup server/sfu
+
+httpsServer.listen(config.port);
