@@ -20,12 +20,15 @@ const createWorkers = require("./createWorkers");
 const io = socketio(httpsServer, {
   cors: [`https://localhost:${config.port}`],
 });
-//init workers, it's where our mediasoup workers will live
+//Initial workers, it's where our mediasoup workers will stored
 let workers = null;
+//Initial router declared, where our 1st router will be stored
+let router = null;
 //initMediaSoup gets medisoup ready to do its thing
 initMediaSoup = async () => {
   workers = await createWorkers();
   // console.log(workers);
+  router = await workers[0].createRouter({ mediaCodecs: config.routerMediaCodecs });
 };
 
 initMediaSoup(); //build our mediasoup server/sfu
