@@ -32,5 +32,14 @@ initMediaSoup = async () => {
 };
 
 initMediaSoup(); //build our mediasoup server/sfu
+// socketIo listener
+io.on("connect", (socket) => {
+  // socket is the client that just connected
+  socket.on("getRtpCap", (cb) => {
+    // cb is a callback to run and will send the arguments
+    // back to the client
+    cb(router.rtpCapabilities);
+  });
+});
 
 httpsServer.listen(config.port);
