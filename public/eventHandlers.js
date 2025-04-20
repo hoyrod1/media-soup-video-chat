@@ -4,7 +4,7 @@ console.log(
 // button listneres
 connectButton.addEventListener("click", initConnect);
 deviceButton.addEventListener("click", deviceSetup);
-// createProdButton.addEventListener("click", createProducer);
+createProdButton.addEventListener("click", createProducer);
 // publishButton.addEventListener("click", publish);
 // createConsButton.addEventListener("click", createConsume);
 // consumeButton.addEventListener("click", consume);

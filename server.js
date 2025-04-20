@@ -34,11 +34,41 @@ initMediaSoup = async () => {
 initMediaSoup(); //build our mediasoup server/sfu
 // socketIo listener
 io.on("connect", (socket) => {
+  let thisClientProducerTransport = null;
   // socket is the client that just connected
-  socket.on("getRtpCap", (cb) => {
-    // cb is a callback to run and will send the arguments
-    // back to the client
-    cb(router.rtpCapabilities);
+  socket.on("getRtpCap", (acknowledgment) => {
+    // acknowledgment is a callback to run and will send the arguments
+    // with the streaming data capabilities, like codecs, back to the client
+    acknowledgment(router.rtpCapabilities);
+  });
+  // create-producer-transport
+  socket.on("create-producer-transport", async (acknowledgment) => {
+    // create a transport, a "Producer Transport"
+    thisClientProducerTransport = await router.createWebRtcTransport({
+      enableUdp: true,
+      enableTcp: true, // Always use UDP unless you can't
+      preferUdp: true,
+      listenInfos: [
+        {
+          protocol: "udp",
+          ip: "127.0.0.1",
+        },
+        {
+          protocol: "tcp",
+          ip: "127.0.0.1",
+        },
+      ],
+    });
+    console.log(thisClientProducerTransport);
+    // the clientTransportParams stores the "Producer Transport ID"
+    const clientTransportParams = {
+      id: thisClientProducerTransport.id,
+      iceParameters: thisClientProducerTransport.iceParameters,
+      iceCandidates: thisClientProducerTransport.iceCandidates,
+      dtlsParameters: thisClientProducerTransport.dtlsParameters,
+    };
+    // the client transport parameters sent back to the client
+    acknowledgment(clientTransportParams);
   });
 });
 

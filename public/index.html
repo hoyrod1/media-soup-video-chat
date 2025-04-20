@@ -15,16 +15,6 @@
   </head>
   <body>
     <div class="container">
-      <!-- buttons -->
-      <div id="step-by-step-buttons" class="">
-          <button id="connect" class="">Init Connect</button>
-          <button id="device" class="" disabled>Create & Load Device</button>
-          <button id="create-producer" class="" disabled>Create Producer Transport</button>
-          <button id="publish" class="" disabled>Publish feed</button>
-          <button id="create-consumer" class="" disabled>Create Consumer Transport</button>
-          <button id="subscribe" class="" disabled>Subscribe to feed</button>
-          <button id="disconnect" class="" disabled>Disconnect</button>
-      </div>
       <!-- video feed (if available) -->
       <div id="video-media" class="row">
         <div class="col-6">
@@ -39,6 +29,16 @@
             <video id="remote-video" autoplay inline class="vid"></video>
           </div>
         </div>
+      </div>
+      <!-- buttons -->
+      <div id="step-by-step-buttons" class="">
+          <button id="connect" class="">Init Connect</button>
+          <button id="device" class="" disabled>Create & Load Device</button>
+          <button id="create-producer" class="" disabled>Create Producer Transport</button>
+          <button id="publish" class="" disabled>Publish feed</button>
+          <button id="create-consumer" class="" disabled>Create Consumer Transport</button>
+          <button id="subscribe" class="" disabled>Subscribe to feed</button>
+          <button id="disconnect" class="" disabled>Disconnect</button>
       </div>
       <!-- has our DOM elements and button listeners -->
       <script src="uiStuff.js"></script>
