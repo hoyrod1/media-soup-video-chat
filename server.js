@@ -15,6 +15,7 @@ const mediaSoup = require("mediasoup");
 
 const config = require("./config/config");
 const createWorkers = require("./createWorkers");
+const createWebRtcTransportFile = require("./public/createWebRtcTransportFile");
 
 //set up the socketio server, listening by way of our express http
 const io = socketio(httpsServer, {
@@ -32,44 +33,91 @@ initMediaSoup = async () => {
 };
 
 initMediaSoup(); //build our mediasoup server/sfu
-// socketIo listener
+//--------------------------- socketIo listener ---------------------------//
 io.on("connect", (socket) => {
+  //----------------------------------------------------------------------//
   let thisClientProducerTransport = null;
-  // socket is the client that just connected
+  let thisClientProducer = null;
+  let thisClientConsumerTransport = null;
+  let thisClientConsumer = null;
+  //----------------------------------------------------------------------//
+
+  //-------------- socket is the client that just connected --------------//
   socket.on("getRtpCap", (acknowledgment) => {
     // acknowledgment is a callback to run and will send the arguments
     // with the streaming data capabilities, like codecs, back to the client
     acknowledgment(router.rtpCapabilities);
   });
-  // create-producer-transport
+  //-----------------------------------------------------------------------//
+
+  //---------------------- create-producer-transport ----------------------//
   socket.on("create-producer-transport", async (acknowledgment) => {
     // create a transport, a "Producer Transport"
-    thisClientProducerTransport = await router.createWebRtcTransport({
-      enableUdp: true,
-      enableTcp: true, // Always use UDP unless you can't
-      preferUdp: true,
-      listenInfos: [
-        {
-          protocol: "udp",
-          ip: "127.0.0.1",
-        },
-        {
-          protocol: "tcp",
-          ip: "127.0.0.1",
-        },
-      ],
-    });
-    console.log(thisClientProducerTransport);
-    // the clientTransportParams stores the "Producer Transport ID"
-    const clientTransportParams = {
-      id: thisClientProducerTransport.id,
-      iceParameters: thisClientProducerTransport.iceParameters,
-      iceCandidates: thisClientProducerTransport.iceCandidates,
-      dtlsParameters: thisClientProducerTransport.dtlsParameters,
-    };
+    const { transport, clientTransportParams } = await createWebRtcTransportFile(router);
+    thisClientProducerTransport = transport;
     // the client transport parameters sent back to the client
     acknowledgment(clientTransportParams);
   });
+  //-----------------------------------------------------------------------//
+
+  //-------------------------- connect-transport --------------------------//
+  socket.on("connect-transport", async (dtlsParameters, ack) => {
+    // Get the dtls info from the client and finish the connection
+    try {
+      await thisClientProducerTransport.connect(dtlsParameters);
+      ack("SUCCESS!!!");
+    } catch (error) {
+      // If there is an error, log it and send cak the error details
+      // console.log(error);
+      ack("ERROR!!!");
+    }
+  });
+  //-----------------------------------------------------------------------//
+
+  //-----------------------------------------------------------------------//
+  socket.on("start-producing", async ({ kind, rtpParameters }, ack) => {
+    // Get the "kind" and the ""rtpParameters
+    try {
+      thisClientProducer = await thisClientProducerTransport.produce({
+        kind,
+        rtpParameters,
+      });
+      ack(thisClientProducer.id);
+    } catch (error) {
+      // If there is an error, log it and send cak the error details
+      // console.log(error);
+      ack("ERROR!!!");
+    }
+  });
+  //-----------------------------------------------------------------------//
+
+  //-----------------------------------------------------------------------//
+
+  //====================================================================================//
+  //---------------------------- create-consumer-transport -----------------------------//
+  socket.on("create-consumer-transport", async (acknowledgment) => {
+    // create a transport, a "Producer Transport"
+    const { transport, clientTransportParams } = await createWebRtcTransportFile(router);
+    thisClientConsumerTransport = transport;
+    // the client transport parameters sent back to the client
+    acknowledgment(clientTransportParams);
+  });
+  //------------------------------------------------------------------------------------//
+
+  //--------------------------- connect-consumer-transport -----------------------------//
+  socket.on("connect-consumer-transport", async (dtlsParameters, ack) => {
+    // Get the dtls info from the client and finish the connection
+    try {
+      await thisClientConsumerTransport.connect(dtlsParameters);
+      ack("SUCCESS!!!");
+    } catch (error) {
+      // If there is an error, log it and send cak the error details
+      // console.log(error);
+      ack("ERROR!!!");
+    }
+  });
+  //------------------------------------------------------------------------------------//
+  //====================================================================================//
 });
 
 httpsServer.listen(config.port);
