@@ -118,6 +118,42 @@ io.on("connect", (socket) => {
   });
   //------------------------------------------------------------------------------------//
   //====================================================================================//
+
+  //====================================================================================//
+  socket.on("consume-media", async ({ rtpCapabilities }, ack) => {
+    // This will set up the feed for our clientConsumer and
+    // Send back the params the client needs to do the same
+    // But first there must be a producer so we must check if there's a producer
+    if (!thisClientProducer) {
+      ack("There is no producer!!!");
+    } else if (
+      !router.canConsume({ producerId: thisClientProducer.id, rtpCapabilities })
+    ) {
+      ack("Can not consume!!!");
+    } else {
+      // There is a producer and the feed can be consumed
+      thisClientConsumer = await thisClientConsumerTransport.consume({
+        producerId: thisClientProducer.id,
+        rtpCapabilities,
+        paused: true, // This is the best way to start the consumer
+      });
+      // The consumerParams variable will contain the parameters to be consumed
+      const consumerParams = {
+        producerId: thisClientProducer.id,
+        id: thisClientConsumer.id,
+        kind: thisClientConsumer.kind,
+        rtpParameters: thisClientConsumer.rtpParameters,
+      };
+      ack(consumerParams);
+    }
+  });
+  //====================================================================================//
+
+  //====================================================================================//
+  socket.on("unpauseConsumer", async (ack) => {
+    await thisClientConsumer.resume();
+  });
+  //====================================================================================//
 });
 
 httpsServer.listen(config.port);

@@ -147,6 +147,22 @@ const createConsumer = async () => {
   //-------------------------------------------------------------------------------//
   consumerTransport = transport;
   //-------------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------------//
+  consumerTransport.on("connectionstatechange", (state) => {
+    console.log("....connection state change....");
+    console.log(state);
+  });
+  //-------------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------------//
+  consumerTransport.on("icegatheringstatechange", (state) => {
+    console.log("....ice gathering change...");
+    console.log(state);
+  });
+  //-------------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------------//
   // the transport connect event will not fire until
   // we call the transport.consume()
   consumerTransport.on("connect", async ({ dtlsParameters }, callback, errback) => {
@@ -169,7 +185,7 @@ const createConsumer = async () => {
     }
   });
   //-------------------------------------------------------------------------------//
-  console.log(consumerTransport);
+  // console.log(consumerTransport);
   // disable "Create Consumer Transport" button
   createConsButton.disabled = true;
   // enable "Consume Feed" button
@@ -177,9 +193,40 @@ const createConsumer = async () => {
 };
 //===================================================================================//
 
-//===================================================================================//
+//===================================== consume =====================================//
 const consume = async () => {
   console.log("Start Comsuming");
+  // First emit the consume-media event
+  // This will get the video and audio track parameters to make a consumer
+  const consumerParams = await socket.emitWithAck("consume-media", {
+    rtpCapabilities: device.rtpCapabilities,
+  });
+  // Check to see of consumerParams is available
+  if (consumerParams === "There is no producer!!!") {
+    console.log("There is no Producer id");
+  } else if (consumerParams === "Can not consume!!!") {
+    console.log("rtpCapabilites failed so there is nothing to consume");
+  } else {
+    // Set up our consumer and add the video and audio track
+    // And add it to the Consuming media video tag
+    consumer = await consumerTransport.consume(consumerParams);
+    const { track } = consumer;
+    // console.log(track);
+    //--------------------------------------//
+    // Listen for various track events
+    track.addEventListener("ended", () => {
+      console.log("track ended");
+    });
+    track.onmute = (event) => {
+      console.log("Track has muted");
+    };
+    track.onunmute = (event) => {
+      console.log("Track has unmuted");
+    };
+    //--------------------------------------//
+    remoteVideo.srcObject = new MediaStream([track]);
+    await socket.emitWithAck("unpauseConsumer");
+  }
 };
 //===================================================================================//
 
@@ -195,3 +242,4 @@ function addSocketListeners() {
     connectButton.innerHTML = "Connected";
   });
 }
+//===================================================================================//
