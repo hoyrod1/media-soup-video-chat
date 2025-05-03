@@ -21,7 +21,7 @@ let consumer = null;
 //=================================== initConnect ===================================//
 // Connect to the server
 const initConnect = () => {
-  socket = io("https://localhost:8000");
+  socket = io("https://192.168.1.208:8000");
   connectButton.innerHTML = "Connecting...";
   connectButton.disabled = true;
   addSocketListeners();
@@ -39,6 +39,10 @@ const deviceSetup = async () => {
   deviceButton.disabled = true;
   // enable "Create & Load Device" button
   createProdButton.disabled = false;
+  // enable "Create & Load Device" button
+  createConsButton.disabled = false;
+  // enable "Disconnect" button
+  disconnectButton.disabled = false;
 };
 //==================================================================================//
 
@@ -207,26 +211,50 @@ const consume = async () => {
   } else if (consumerParams === "Can not consume!!!") {
     console.log("rtpCapabilites failed so there is nothing to consume");
   } else {
+    //----------------------------------------------------------------//
     // Set up our consumer and add the video and audio track
     // And add it to the Consuming media video tag
     consumer = await consumerTransport.consume(consumerParams);
+    //----------------------------------------------------------------//
     const { track } = consumer;
     // console.log(track);
-    //--------------------------------------//
+    //----------------------------------------------------------------//
     // Listen for various track events
     track.addEventListener("ended", () => {
       console.log("track ended");
     });
+    //----------------------------------------------------------------//
     track.onmute = (event) => {
       console.log("Track has muted");
     };
+    //----------------------------------------------------------------//
     track.onunmute = (event) => {
       console.log("Track has unmuted");
     };
-    //--------------------------------------//
+    //----------------------------------------------------------------//
+    // Add video & audio track to the "remote" video element
+    // See MDN on MediaStream for more info
     remoteVideo.srcObject = new MediaStream([track]);
+    //----------------------------------------------------------------//
     await socket.emitWithAck("unpauseConsumer");
+    //----------------------------------------------------------------//
   }
+};
+//===================================================================================//
+
+//==================================== disconnect ===================================//
+const disconnect = async () => {
+  console.log("Proceed with disconnecting");
+  // Close all the video and audio feeds
+  // Send message to the server
+  const closedResp = await socket.emitWithAck("close-all");
+  if (closedResp === "There is a close error") {
+    console.log("There is an error on the server...");
+  }
+  // Even if there is an error when trying to close the video & ausio feed
+  // the video & audio feed will still close
+  producerTransport?.close();
+  consumerTransport?.close();
 };
 //===================================================================================//
 

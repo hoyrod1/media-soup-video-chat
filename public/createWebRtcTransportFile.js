@@ -12,11 +12,13 @@ const createWebRtcTransportFile = (router) =>
       listenInfos: [
         {
           protocol: "udp",
-          ip: "127.0.0.1",
+          ip: "0.0.0.0",
+          announcedAddress: "192.168.1.208",
         },
         {
           protocol: "tcp",
-          ip: "127.0.0.1",
+          ip: "0.0.0.0",
+          announcedAddress: "192.168.1.208",
         },
       ],
     });

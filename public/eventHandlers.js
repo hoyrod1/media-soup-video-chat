@@ -8,4 +8,4 @@ createProdButton.addEventListener("click", createProducer);
 publishButton.addEventListener("click", publish);
 createConsButton.addEventListener("click", createConsumer);
 consumeButton.addEventListener("click", consume);
-// disconnectButton.addEventListener("click", disconnect);
+disconnectButton.addEventListener("click", disconnect);
